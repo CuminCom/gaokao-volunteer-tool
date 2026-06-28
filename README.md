@@ -27,7 +27,7 @@
 - SheetJS (xlsx) 用于 Excel 解析与生成
 
 ## 🌐 在线体验
-点击此处即可使用（待你将仓库开启 GitHub Pages 后替换链接）：
+点击此处即可使用：
 `https://CuminCom.github.io/gaokao-volunteer-tool/`
 
 ## 📄 开源协议
