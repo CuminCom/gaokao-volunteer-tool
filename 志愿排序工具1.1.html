@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高考志愿专业组管理工具</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+    </script>
+    <style>
+        /* 样式与之前相同，保持不变 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f7fa;
+            color: #1e293b;
+            padding: 24px 32px;
+            min-height: 100vh;
+        }
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px 20px;
+            background: #fff;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+        }
+        .toolbar .file-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .toolbar .file-area input[type="file"] {
+            display: none;
+        }
+        .toolbar .file-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #2563eb;
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.15s;
+            border: none;
+        }
+        .toolbar .file-label:hover {
+            background: #1d4ed8;
+        }
+        .toolbar .file-status {
+            font-size: 14px;
+            color: #64748b;
+        }
+        .toolbar .file-status .name {
+            color: #0f172a;
+            font-weight: 500;
+        }
+        .toolbar .spacer {
+            flex: 1;
+            min-width: 12px;
+        }
+        .toolbar .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .toolbar .btn {
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            color: #1e293b;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .toolbar .btn:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        .toolbar .btn.primary {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
+        }
+        .toolbar .btn.primary:hover {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+        }
+        .toolbar .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #e9edf2;
+            border-color: #e2e8f0;
+            color: #94a3b8;
+        }
+        .toolbar .btn.green {
+            background: #22c55e;
+            border-color: #22c55e;
+            color: #fff;
+        }
+        .toolbar .btn.green:hover {
+            background: #16a34a;
+            border-color: #16a34a;
+        }
+        .toolbar .stats {
+            font-size: 14px;
+            color: #64748b;
+            padding: 0 4px;
+        }
+        .toolbar .stats span {
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .empty-state {
+            background: #fff;
+            border-radius: 8px;
+            padding: 60px 20px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            color: #94a3b8;
+        }
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        .empty-state p {
+            font-size: 16px;
+        }
+        .group-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .group-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            border: 1px solid #e9edf2;
+            transition: border-color 0.15s;
+            cursor: default;
+            user-select: none;
+        }
+        .group-card.dragging {
+            opacity: 0.5;
+            border-color: #2563eb;
+        }
+        .group-card.drag-over {
+            border-color: #2563eb;
+            border-width: 2px;
+            background: #f0f4ff;
+        }
+        .group-card .group-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            cursor: grab;
+            border-radius: 8px 8px 0 0;
+            transition: background 0.15s;
+            flex-wrap: wrap;
+        }
+        .group-card .group-header:active {
+            cursor: grabbing;
+        }
+        .group-card .group-header .drag-handle {
+            font-size: 18px;
+            color: #94a3b8;
+            cursor: grab;
+            line-height: 1;
+            padding: 0 2px;
+            flex-shrink: 0;
+        }
+        .group-card .group-header .drag-handle:active {
+            cursor: grabbing;
+        }
+        .group-card .group-header .toggle-btn {
+            font-size: 14px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 4px;
+            color: #475569;
+            transition: background 0.15s;
+            flex-shrink: 0;
+            padding: 0;
+        }
+        .group-card .group-header .toggle-btn:hover {
+            background: #e9edf2;
+        }
+        .group-card .group-header .group-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #0f172a;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .group-card .group-header .group-min-max-score {
+            font-size: 14px;
+            font-weight: 500;
+            color: #2563eb;
+            background: #eff6ff;
+            padding: 2px 12px;
+            border-radius: 12px;
+            flex-shrink: 0;
+            white-space: nowrap;
+            display: flex;
+            gap: 8px;
+        }
+        .group-card .group-header .group-min-max-score .empty {
+            color: #94a3b8;
+            background: #f1f5f9;
+            padding: 0 4px;
+            border-radius: 4px;
+        }
+        .group-card .group-header .group-min-max-score .sep {
+            color: #94a3b8;
+        }
+        .group-card .group-header .action-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+            border-radius: 4px;
+            transition: color 0.15s, background 0.15s;
+            flex-shrink: 0;
+        }
+        .group-card .group-header .action-btn:hover {
+            color: #2563eb;
+            background: #eff6ff;
+        }
+        .group-card .group-header .action-btn.delete:hover {
+            color: #ef4444;
+            background: #fee2e2;
+        }
+        .group-card .group-user-note {
+            padding: 0 16px 8px 52px;
+            font-size: 13px;
+            color: #64748b;
+            border-top: 1px dashed #e9edf2;
+            background: #fafbfc;
+        }
+        .group-card .group-user-note:empty {
+            display: none;
+        }
+        .group-card .group-user-note .label {
+            font-weight: 500;
+            color: #475569;
+            margin-right: 4px;
+        }
+        .major-list {
+            border-top: 1px solid #e9edf2;
+            padding: 4px 0;
+        }
+        .major-list.collapsed {
+            display: none;
+        }
+        .major-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 16px 6px 48px;
+            border-radius: 4px;
+            margin: 2px 6px;
+            cursor: default;
+            transition: background 0.2s;
+            position: relative;
+            flex-wrap: wrap;
+        }
+        .major-item.dragging {
+            opacity: 0.4;
+        }
+        .major-item.drag-over {
+            background: #f0f4ff !important;
+            border: 1px dashed #2563eb;
+            margin: 1px 5px;
+            border-radius: 4px;
+        }
+        .major-item .major-drag-handle {
+            font-size: 16px;
+            color: #cbd5e1;
+            cursor: grab;
+            line-height: 1.4;
+            flex-shrink: 0;
+            width: 20px;
+            text-align: center;
+        }
+        .major-item .major-drag-handle:active {
+            cursor: grabbing;
+        }
+        .major-item .major-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .major-item .major-name {
+            font-size: 14px;
+            color: #0f172a;
+            word-break: break-word;
+        }
+        .major-item .major-scores {
+            display: flex;
+            gap: 12px;
+            font-size: 13px;
+            color: #475569;
+            margin-top: 2px;
+            flex-wrap: wrap;
+        }
+        .major-item .major-scores .score-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .major-item .major-scores .score-item .label {
+            color: #94a3b8;
+        }
+        .major-item .major-scores .score-item .value {
+            font-weight: 500;
+            color: #1e293b;
+        }
+        .major-item .major-scores .score-item .value.empty {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+        .major-item .major-note {
+            font-size: 13px;
+            color: #94a3b8;
+            line-height: 1.4;
+            margin-top: 2px;
+        }
+        .major-item .major-user-note {
+            font-size: 13px;
+            color: #2563eb;
+            line-height: 1.4;
+            margin-top: 2px;
+        }
+        .major-item .major-user-note .label {
+            font-weight: 500;
+            color: #475569;
+            margin-right: 4px;
+        }
+        .major-item .action-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+            border-radius: 4px;
+            transition: color 0.15s, background 0.15s;
+            flex-shrink: 0;
+        }
+        .major-item .action-btn:hover {
+            color: #2563eb;
+            background: #eff6ff;
+        }
+        .major-item .action-btn.delete:hover {
+            color: #ef4444;
+            background: #fee2e2;
+        }
+        @media (max-width: 700px) {
+            body { padding: 12px 16px; }
+            .toolbar { padding: 12px 16px; gap: 10px; }
+            .toolbar .file-area { flex-wrap: wrap; }
+            .group-card .group-header { flex-wrap: wrap; gap: 6px; }
+            .group-card .group-header .group-title { white-space: normal; font-size: 14px; }
+            .group-card .group-user-note { padding-left: 36px; }
+            .major-item { padding: 6px 12px 6px 36px; flex-wrap: wrap; }
+            .major-item .major-info { flex: 1 1 100%; order: 2; }
+            .major-item .major-scores { order: 1; flex: 0 0 auto; }
+            .major-item .major-drag-handle { order: 0; }
+            .action-btn { font-size: 14px; }
+            .group-card .group-header .group-min-max-score { font-size: 12px; padding: 2px 8px; flex-wrap: wrap; }
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px 28px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        .modal .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .modal .form-group {
+            margin-bottom: 14px;
+        }
+        .modal .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 4px;
+        }
+        .modal .form-group input,
+        .modal .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.15s;
+        }
+        .modal .form-group input:focus,
+        .modal .form-group select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+        .modal .form-row {
+            display: flex;
+            gap: 12px;
+        }
+        .modal .form-row .form-group {
+            flex: 1;
+        }
+        .modal .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal .modal-actions .btn {
+            padding: 8px 20px;
+        }
+        .modal .modal-actions .btn.cancel {
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+        }
+        .modal .modal-actions .btn.cancel:hover {
+            background: #e2e8f0;
+        }
+        .modal .modal-actions .btn.confirm {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
+        }
+        .modal .modal-actions .btn.confirm:hover {
+            background: #1d4ed8;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="toolbar">
+            <div class="file-area">
+                <label class="file-label" for="fileInput">📂 选择文件</label>
+                <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+                <span class="file-status" id="fileStatus">未选择文件</span>
+            </div>
+            <div class="spacer"></div>
+            <div class="stats" id="statsInfo">专业组: <span id="groupCount">0</span> &nbsp;|&nbsp; 专业: <span id="majorCount">0</span></div>
+            <div class="btn-group">
+                <button class="btn green" id="addBtn">➕ 添加</button>
+                <button class="btn" id="expandAllBtn">📖 全部展开</button>
+                <button class="btn" id="collapseAllBtn">📕 全部收起</button>
+                <button class="btn primary" id="exportBtn" disabled>⬇️ 导出</button>
+            </div>
+        </div>
+        <div id="groupListContainer" class="group-list">
+            <div class="empty-state">
+                <div class="icon">📋</div>
+                <p>请上传 Excel 或 CSV 文件以加载志愿数据</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加模态框 -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <div class="modal-title">添加专业 / 专业组</div>
+            <div class="form-group">
+                <label>操作类型</label>
+                <select id="addType">
+                    <option value="major">添加专业（到已有或新建专业组）</option>
+                    <option value="group">仅添加专业组（空组）</option>
+                </select>
+            </div>
+            <div id="groupFields">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>学校代码 *</label>
+                        <input type="text" id="addSchoolCode" placeholder="如 1020">
+                    </div>
+                    <div class="form-group">
+                        <label>学校名称 *</label>
+                        <input type="text" id="addSchoolName" placeholder="如 中央民族大学">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>专业组 *</label>
+                    <input type="text" id="addGroupId" placeholder="如 02">
+                </div>
+            </div>
+            <div id="majorFields">
+                <div class="form-group">
+                    <label>专业名称 *</label>
+                    <input type="text" id="addMajorName" placeholder="如 数字经济">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>最低分</label>
+                        <input type="text" id="addScoreLow" placeholder="如 631">
+                    </div>
+                    <div class="form-group">
+                        <label>最高分</label>
+                        <input type="text" id="addScoreHigh" placeholder="如 645">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <input type="text" id="addNote" placeholder="可选">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn cancel" id="addCancelBtn">取消</button>
+                <button class="btn confirm" id="addConfirmBtn">确认添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑分数模态框 -->
+    <div class="modal-overlay" id="scoreModal">
+        <div class="modal">
+            <div class="modal-title">编辑分数</div>
+            <div class="form-group">
+                <label>专业</label>
+                <input type="text" id="scoreMajorName" disabled style="background:#f1f5f9;">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>最低分</label>
+                    <input type="text" id="scoreLowInput" placeholder="留空删除">
+                </div>
+                <div class="form-group">
+                    <label>最高分</label>
+                    <input type="text" id="scoreHighInput" placeholder="留空删除">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn cancel" id="scoreCancelBtn">取消</button>
+                <button class="btn confirm" id="scoreConfirmBtn">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            let groups = [];
+            let nextMajorId = 0;
+            let currentFileName = '';
+            let editingScoreTarget = null;
+
+            const container = document.getElementById('groupListContainer');
+            const fileInput = document.getElementById('fileInput');
+            const fileStatus = document.getElementById('fileStatus');
+            const groupCountEl = document.getElementById('groupCount');
+            const majorCountEl = document.getElementById('majorCount');
+            const exportBtn = document.getElementById('exportBtn');
+            const addBtn = document.getElementById('addBtn');
+
+            const addModal = document.getElementById('addModal');
+            const addType = document.getElementById('addType');
+            const addSchoolCode = document.getElementById('addSchoolCode');
+            const addSchoolName = document.getElementById('addSchoolName');
+            const addGroupId = document.getElementById('addGroupId');
+            const addMajorName = document.getElementById('addMajorName');
+            const addScoreLow = document.getElementById('addScoreLow');
+            const addScoreHigh = document.getElementById('addScoreHigh');
+            const addNote = document.getElementById('addNote');
+            const addCancelBtn = document.getElementById('addCancelBtn');
+            const addConfirmBtn = document.getElementById('addConfirmBtn');
+            const groupFields = document.getElementById('groupFields');
+            const majorFields = document.getElementById('majorFields');
+
+            const scoreModal = document.getElementById('scoreModal');
+            const scoreMajorName = document.getElementById('scoreMajorName');
+            const scoreLowInput = document.getElementById('scoreLowInput');
+            const scoreHighInput = document.getElementById('scoreHighInput');
+            const scoreCancelBtn = document.getElementById('scoreCancelBtn');
+            const scoreConfirmBtn = document.getElementById('scoreConfirmBtn');
+
+            // ---- 辅助函数 ----
+            function updateGroupMinMax(group) {
+                const lows = group.majors.map(m => m.scoreLow).filter(s => s !== null && !isNaN(s));
+                const highs = group.majors.map(m => m.scoreHigh).filter(s => s !== null && !isNaN(s));
+                group.minScore = lows.length > 0 ? Math.min(...lows) : null;
+                group.maxScore = highs.length > 0 ? Math.max(...highs) : null;
+            }
+
+            // ---- 解析导入（精确匹配列名） ----
+            function parseData(rows) {
+                const groupMap = new Map();
+                if (rows.length === 0) return [];
+
+                // 检测表头行
+                let startRow = 0;
+                const headerRow = rows[0];
+                const headerStr = headerRow.map(String).join(' ');
+                if (/学校代码|专业组|专业|最低分/.test(headerStr)) {
+                    startRow = 1;
+                } else {
+                    // 无表头，假定按顺序
+                    startRow = 0;
+                }
+
+                // 确定列索引（基于表头或默认顺序）
+                let colSchoolCode = 0,
+                    colSchoolName = 1,
+                    colGroupId = 2,
+                    colMajorName = 3,
+                    colScoreLow = 4,
+                    colScoreHigh = -1,
+                    colNote = 5,
+                    colGroupNote = -1,
+                    colMajorNote = -1;
+
+                if (startRow === 1) {
+                    // 有表头，精确查找
+                    headerRow.forEach((cell, idx) => {
+                        const v = String(cell).trim();
+                        if (/^学校代码$/.test(v)) colSchoolCode = idx;
+                        else if (/^学校名称$/.test(v)) colSchoolName = idx;
+                        else if (/^专业组$/.test(v)) colGroupId = idx;
+                        else if (/^专业$/.test(v) && !/组|附注/.test(v)) colMajorName = idx;
+                        else if (/^最低分$/.test(v)) colScoreLow = idx;
+                        else if (/^最高分$/.test(v)) colScoreHigh = idx;
+                        else if (/^备注$/.test(v) && !/附注/.test(v)) colNote = idx;
+                        else if (/^专业组附注$/.test(v)) colGroupNote = idx;
+                        else if (/^专业附注$/.test(v)) colMajorNote = idx;
+                    });
+                } else {
+                    // 无表头，按列顺序（索引0-8）
+                    colSchoolCode = 0;
+                    colSchoolName = 1;
+                    colGroupId = 2;
+                    colMajorName = 3;
+                    colScoreLow = 4;
+                    colScoreHigh = 5;
+                    colNote = 6;
+                    colGroupNote = 7;
+                    colMajorNote = 8;
+                }
+
+                // 遍历数据行
+                for (let i = startRow; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.length < 4) continue;
+                    const schoolCode = String(row[colSchoolCode] || '').trim();
+                    const schoolName = String(row[colSchoolName] || '').trim();
+                    const groupId = String(row[colGroupId] || '').trim();
+                    const majorName = String(row[colMajorName] || '').trim();
+                    if (!schoolCode || !schoolName || !groupId || !majorName) continue;
+
+                    const scoreLowRaw = (colScoreLow >= 0 && row[colScoreLow] !== undefined) ? String(row[colScoreLow]).trim() : '';
+                    const scoreHighRaw = (colScoreHigh >= 0 && row[colScoreHigh] !== undefined) ? String(row[colScoreHigh]).trim() :
+                    '';
+                    const note = (colNote >= 0 && row[colNote] !== undefined) ? String(row[colNote]).trim() : '';
+                    const groupUserNote = (colGroupNote >= 0 && row[colGroupNote] !== undefined) ? String(row[colGroupNote])
+                        .trim() : '';
+                    const majorUserNote = (colMajorNote >= 0 && row[colMajorNote] !== undefined) ? String(row[colMajorNote])
+                        .trim() : '';
+
+                    const key = `${schoolCode}|${schoolName}|${groupId}`;
+                    if (!groupMap.has(key)) {
+                        groupMap.set(key, {
+                            schoolCode,
+                            schoolName,
+                            groupId,
+                            majors: [],
+                            expanded: true,
+                            userNote: groupUserNote,
+                            minScore: null,
+                            maxScore: null,
+                        });
+                    }
+                    const group = groupMap.get(key);
+                    // 如果之前没有设置 userNote 且当前有值，则更新（所有行应一致）
+                    if (!group.userNote && groupUserNote) group.userNote = groupUserNote;
+
+                    const scoreLow = scoreLowRaw ? parseFloat(scoreLowRaw) : null;
+                    const scoreHigh = scoreHighRaw ? parseFloat(scoreHighRaw) : null;
+                    group.majors.push({
+                        id: nextMajorId++,
+                        name: majorName,
+                        scoreLow: scoreLow,
+                        scoreHigh: scoreHigh,
+                        scoreLowRaw: scoreLowRaw,
+                        scoreHighRaw: scoreHighRaw,
+                        note: note,
+                        userNote: majorUserNote,
+                    });
+                }
+
+                const result = [];
+                for (const [key, group] of groupMap) {
+                    updateGroupMinMax(group);
+                    result.push({
+                        id: key,
+                        schoolCode: group.schoolCode,
+                        schoolName: group.schoolName,
+                        groupId: group.groupId,
+                        majors: group.majors,
+                        expanded: true,
+                        minScore: group.minScore,
+                        maxScore: group.maxScore,
+                        userNote: group.userNote || '',
+                    });
+                }
+                // 保持文件顺序（groupMap的插入顺序即为遍历顺序）
+                return result;
+            }
+
+            // ---- 导出 ----
+            function exportData() {
+                if (groups.length === 0) {
+                    alert('没有数据可导出');
+                    return;
+                }
+                const rows = [
+                    ['学校代码', '学校名称', '专业组', '专业', '最低分', '最高分', '备注', '专业组附注', '专业附注']
+                ];
+                for (const group of groups) {
+                    for (const major of group.majors) {
+                        rows.push([
+                            group.schoolCode,
+                            group.schoolName,
+                            group.groupId,
+                            major.name,
+                            major.scoreLowRaw || '',
+                            major.scoreHighRaw || '',
+                            major.note || '',
+                            group.userNote || '',
+                            major.userNote || ''
+                        ]);
+                    }
+                }
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(rows);
+                XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbout], { type: 'application/octet-stream' });
+                const link = document.createElement('a');
+                const defaultName = currentFileName ? currentFileName.replace(/\.[^.]+$/, '_已调整.xlsx') : '志愿数据_已调整.xlsx';
+                link.href = URL.createObjectURL(blob);
+                link.download = defaultName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            }
+
+            // ---- 删除 ----
+            function deleteGroup(gIdx) {
+                if (gIdx < 0 || gIdx >= groups.length) return;
+                if (!confirm(`确定删除专业组 "${groups[gIdx].schoolCode}-${groups[gIdx].schoolName}-${groups[gIdx].groupId}" 及其所有专业？`)) return;
+                groups.splice(gIdx, 1);
+                render();
+            }
+            function deleteMajor(gIdx, mIdx) {
+                if (gIdx < 0 || gIdx >= groups.length) return;
+                const group = groups[gIdx];
+                if (mIdx < 0 || mIdx >= group.majors.length) return;
+                if (!confirm(`确定删除专业 "${group.majors[mIdx].name}" ？`)) return;
+                group.majors.splice(mIdx, 1);
+                updateGroupMinMax(group);
+                render();
+            }
+
+            // ---- 附注 ----
+            function editGroupNote(gIdx) {
+                if (gIdx < 0 || gIdx >= groups.length) return;
+                const group = groups[gIdx];
+                const current = group.userNote || '';
+                const input = prompt('请输入专业组附注（留空删除）：', current);
+                if (input === null) return;
+                group.userNote = input.trim();
+                render();
+            }
+            function editMajorNote(gIdx, mIdx) {
+                if (gIdx < 0 || gIdx >= groups.length) return;
+                const group = groups[gIdx];
+                if (mIdx < 0 || mIdx >= group.majors.length) return;
+                const major = group.majors[mIdx];
+                const current = major.userNote || '';
+                const input = prompt('请输入专业附注（留空删除）：', current);
+                if (input === null) return;
+                major.userNote = input.trim();
+                render();
+            }
+
+            // ---- 编辑分数 ----
+            function openScoreModal(gIdx, mIdx) {
+                if (gIdx < 0 || gIdx >= groups.length) return;
+                const group = groups[gIdx];
+                if (mIdx < 0 || mIdx >= group.majors.length) return;
+                const major = group.majors[mIdx];
+                editingScoreTarget = { groupIndex: gIdx, majorIndex: mIdx };
+                scoreMajorName.value = major.name;
+                scoreLowInput.value = major.scoreLowRaw || '';
+                scoreHighInput.value = major.scoreHighRaw || '';
+                scoreModal.classList.add('active');
+            }
+            function closeScoreModal() {
+                scoreModal.classList.remove('active');
+                editingScoreTarget = null;
+            }
+            function confirmScoreEdit() {
+                if (!editingScoreTarget) return;
+                const { groupIndex: gIdx, majorIndex: mIdx } = editingScoreTarget;
+                if (gIdx < 0 || gIdx >= groups.length) return;
+                const group = groups[gIdx];
+                if (mIdx < 0 || mIdx >= group.majors.length) return;
+                const major = group.majors[mIdx];
+                const lowStr = scoreLowInput.value.trim();
+                const highStr = scoreHighInput.value.trim();
+                major.scoreLowRaw = lowStr;
+                major.scoreHighRaw = highStr;
+                major.scoreLow = lowStr ? parseFloat(lowStr) : null;
+                major.scoreHigh = highStr ? parseFloat(highStr) : null;
+                updateGroupMinMax(group);
+                closeScoreModal();
+                render();
+            }
+
+            // ---- 渲染 ----
+            function render() {
+                if (groups.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">📋</div>
+                            <p>请上传 Excel 或 CSV 文件以加载志愿数据</p>
+                        </div>
+                    `;
+                    updateStats();
+                    exportBtn.disabled = true;
+                    return;
+                }
+                exportBtn.disabled = false;
+
+                let html = '';
+                for (let gIdx = 0; gIdx < groups.length; gIdx++) {
+                    const group = groups[gIdx];
+                    const minScoreStr = group.minScore !== null ? group.minScore : '—';
+                    const maxScoreStr = group.maxScore !== null ? group.maxScore : '—';
+                    const hasScores = group.minScore !== null || group.maxScore !== null;
+
+                    const groupNoteHtml = group.userNote ? `
+                        <div class="group-user-note">
+                            <span class="label">📌 组附注：</span>${escapeHtml(group.userNote)}
+                        </div>
+                    ` : '';
+
+                    html += `
+                        <div class="group-card" data-group-index="${gIdx}" draggable="true" data-group-id="${group.id}">
+                            <div class="group-header" data-group-index="${gIdx}" style="cursor:grab;">
+                                <span class="drag-handle" data-group-index="${gIdx}">⠿</span>
+                                <button class="toggle-btn" data-group-index="${gIdx}" data-action="toggle">${group.expanded ? '▾' : '▸'}</button>
+                                <span class="group-title">${group.schoolCode}-${group.schoolName}-${group.groupId}</span>
+                                <span class="group-min-max-score">
+                                    <span class="min">最低 ${minScoreStr}</span>
+                                    <span class="sep">|</span>
+                                    <span class="max">最高 ${maxScoreStr}</span>
+                                    ${!hasScores ? '<span class="empty">无分数</span>' : ''}
+                                </span>
+                                <button class="action-btn" data-action="edit-group-note" data-group-index="${gIdx}" title="添加/编辑专业组附注">📝</button>
+                                <button class="action-btn delete" data-action="delete-group" data-group-index="${gIdx}" title="删除整个专业组">✕</button>
+                            </div>
+                            ${groupNoteHtml}
+                            <div class="major-list ${group.expanded ? '' : 'collapsed'}" data-group-index="${gIdx}">
+                                ${group.majors.map((major, mIdx) => {
+                                    const lowDisplay = major.scoreLow !== null ? major.scoreLow : '—';
+                                    const highDisplay = major.scoreHigh !== null ? major.scoreHigh : '—';
+                                    const lowClass = major.scoreLow === null ? 'empty' : '';
+                                    const highClass = major.scoreHigh === null ? 'empty' : '';
+                                    const noteHtml = major.note ? `<div class="major-note">${escapeHtml(major.note)}</div>` : '';
+                                    const userNoteHtml = major.userNote ? `<div class="major-user-note"><span class="label">📌 附注：</span>${escapeHtml(major.userNote)}</div>` : '';
+                                    return `
+                                        <div class="major-item" data-group-index="${gIdx}" data-major-index="${mIdx}" draggable="true">
+                                            <span class="major-drag-handle" data-group-index="${gIdx}" data-major-index="${mIdx}">⠿</span>
+                                            <div class="major-info">
+                                                <span class="major-name">${escapeHtml(major.name)}</span>
+                                                <div class="major-scores">
+                                                    <span class="score-item"><span class="label">最低</span> <span class="value ${lowClass}">${lowDisplay}</span></span>
+                                                    <span class="score-item"><span class="label">最高</span> <span class="value ${highClass}">${highDisplay}</span></span>
+                                                </div>
+                                                ${noteHtml}
+                                                ${userNoteHtml}
+                                            </div>
+                                            <button class="action-btn" data-action="edit-scores" data-group-index="${gIdx}" data-major-index="${mIdx}" title="编辑最低/最高分">✎</button>
+                                            <button class="action-btn" data-action="edit-major-note" data-group-index="${gIdx}" data-major-index="${mIdx}" title="添加/编辑专业附注">📝</button>
+                                            <button class="action-btn delete" data-action="delete-major" data-group-index="${gIdx}" data-major-index="${mIdx}" title="删除此专业">✕</button>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                container.innerHTML = html;
+                updateStats();
+                bindToggleEvents();
+                bindDragEvents();
+                bindMajorDragEvents();
+                bindActionEvents();
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function updateStats() {
+                const totalGroups = groups.length;
+                let totalMajors = 0;
+                for (const g of groups) totalMajors += g.majors.length;
+                groupCountEl.textContent = totalGroups;
+                majorCountEl.textContent = totalMajors;
+            }
+
+            // ---- 事件绑定 ----
+            function bindToggleEvents() {
+                document.querySelectorAll('.toggle-btn').forEach(btn => {
+                    btn.removeEventListener('click', handleToggle);
+                    btn.addEventListener('click', handleToggle);
+                });
+            }
+            function handleToggle(e) {
+                e.stopPropagation();
+                const btn = e.currentTarget;
+                const gIdx = parseInt(btn.dataset.groupIndex, 10);
+                if (isNaN(gIdx) || gIdx < 0 || gIdx >= groups.length) return;
+                groups[gIdx].expanded = !groups[gIdx].expanded;
+                render();
+            }
+            function expandAll() { for (const g of groups) g.expanded = true; render(); }
+            function collapseAll() { for (const g of groups) g.expanded = false; render(); }
+
+            function bindActionEvents() {
+                document.querySelectorAll('[data-action="delete-group"]').forEach(btn => {
+                    btn.removeEventListener('click', handleDeleteGroup);
+                    btn.addEventListener('click', handleDeleteGroup);
+                });
+                document.querySelectorAll('[data-action="delete-major"]').forEach(btn => {
+                    btn.removeEventListener('click', handleDeleteMajor);
+                    btn.addEventListener('click', handleDeleteMajor);
+                });
+                document.querySelectorAll('[data-action="edit-group-note"]').forEach(btn => {
+                    btn.removeEventListener('click', handleEditGroupNote);
+                    btn.addEventListener('click', handleEditGroupNote);
+                });
+                document.querySelectorAll('[data-action="edit-major-note"]').forEach(btn => {
+                    btn.removeEventListener('click', handleEditMajorNote);
+                    btn.addEventListener('click', handleEditMajorNote);
+                });
+                document.querySelectorAll('[data-action="edit-scores"]').forEach(btn => {
+                    btn.removeEventListener('click', handleEditScores);
+                    btn.addEventListener('click', handleEditScores);
+                });
+            }
+            function handleDeleteGroup(e) { e.stopPropagation(); const btn = e.currentTarget; const gIdx = parseInt(btn.dataset.groupIndex, 10); if (!isNaN(gIdx)) deleteGroup(gIdx); }
+            function handleDeleteMajor(e) { e.stopPropagation(); const btn = e.currentTarget; const gIdx = parseInt(btn.dataset.groupIndex, 10); const mIdx = parseInt(btn.dataset.majorIndex, 10); if (!isNaN(gIdx) && !isNaN(mIdx)) deleteMajor(gIdx, mIdx); }
+            function handleEditGroupNote(e) { e.stopPropagation(); const btn = e.currentTarget; const gIdx = parseInt(btn.dataset.groupIndex, 10); if (!isNaN(gIdx)) editGroupNote(gIdx); }
+            function handleEditMajorNote(e) { e.stopPropagation(); const btn = e.currentTarget; const gIdx = parseInt(btn.dataset.groupIndex, 10); const mIdx = parseInt(btn.dataset.majorIndex, 10); if (!isNaN(gIdx) && !isNaN(mIdx)) editMajorNote(gIdx, mIdx); }
+            function handleEditScores(e) { e.stopPropagation(); const btn = e.currentTarget; const gIdx = parseInt(btn.dataset.groupIndex, 10); const mIdx = parseInt(btn.dataset.majorIndex, 10); if (!isNaN(gIdx) && !isNaN(mIdx)) openScoreModal(gIdx, mIdx); }
+
+            // ---- 拖拽 ----
+            let draggedGroupIndex = null;
+            function bindDragEvents() {
+                container.removeEventListener('dragstart', handleGroupDragStart);
+                container.removeEventListener('dragend', handleGroupDragEnd);
+                container.removeEventListener('dragover', handleGroupDragOver);
+                container.removeEventListener('dragenter', handleGroupDragEnter);
+                container.removeEventListener('dragleave', handleGroupDragLeave);
+                container.removeEventListener('drop', handleGroupDrop);
+                container.addEventListener('dragstart', handleGroupDragStart);
+                container.addEventListener('dragend', handleGroupDragEnd);
+                container.addEventListener('dragover', handleGroupDragOver);
+                container.addEventListener('dragenter', handleGroupDragEnter);
+                container.addEventListener('dragleave', handleGroupDragLeave);
+                container.addEventListener('drop', handleGroupDrop);
+            }
+            function handleGroupDragStart(e) { const card = e.target.closest('.group-card'); if (!card) return; const gIdx = parseInt(card.dataset.groupIndex, 10); if (isNaN(gIdx)) return; draggedGroupIndex = gIdx; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(gIdx)); requestAnimationFrame(() => { card.classList.add('dragging'); }); }
+            function handleGroupDragEnd(e) { const card = e.target.closest('.group-card'); if (card) card.classList.remove('dragging'); document.querySelectorAll('.group-card.drag-over').forEach(el => el.classList.remove('drag-over')); draggedGroupIndex = null; }
+            function handleGroupDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; const card = e.target.closest('.group-card'); if (!card) return; const gIdx = parseInt(card.dataset.groupIndex, 10); if (isNaN(gIdx) || gIdx === draggedGroupIndex) return; document.querySelectorAll('.group-card.drag-over').forEach(el => { if (parseInt(el.dataset.groupIndex, 10) !== gIdx) el.classList.remove('drag-over'); }); card.classList.add('drag-over'); }
+            function handleGroupDragEnter(e) { e.preventDefault(); }
+            function handleGroupDragLeave(e) { const card = e.target.closest('.group-card'); if (card) card.classList.remove('drag-over'); }
+            function handleGroupDrop(e) { e.preventDefault(); const card = e.target.closest('.group-card'); if (!card) return; const targetIdx = parseInt(card.dataset.groupIndex, 10); if (isNaN(targetIdx) || draggedGroupIndex === null || targetIdx === draggedGroupIndex) { card.classList.remove('drag-over'); return; } if (draggedGroupIndex < 0 || draggedGroupIndex >= groups.length || targetIdx < 0 || targetIdx >= groups.length) { card.classList.remove('drag-over'); return; } const [removed] = groups.splice(draggedGroupIndex, 1); groups.splice(targetIdx, 0, removed); draggedGroupIndex = null; document.querySelectorAll('.group-card.drag-over').forEach(el => el.classList.remove('drag-over')); render(); }
+
+            let draggedMajorData = null;
+            function bindMajorDragEvents() {
+                container.removeEventListener('dragstart', handleMajorDragStart);
+                container.removeEventListener('dragend', handleMajorDragEnd);
+                container.removeEventListener('dragover', handleMajorDragOver);
+                container.removeEventListener('dragenter', handleMajorDragEnter);
+                container.removeEventListener('dragleave', handleMajorDragLeave);
+                container.removeEventListener('drop', handleMajorDrop);
+                container.addEventListener('dragstart', handleMajorDragStart);
+                container.addEventListener('dragend', handleMajorDragEnd);
+                container.addEventListener('dragover', handleMajorDragOver);
+                container.addEventListener('dragenter', handleMajorDragEnter);
+                container.addEventListener('dragleave', handleMajorDragLeave);
+                container.addEventListener('drop', handleMajorDrop);
+            }
+            function handleMajorDragStart(e) { const item = e.target.closest('.major-item'); if (!item) return; const gIdx = parseInt(item.dataset.groupIndex, 10); const mIdx = parseInt(item.dataset.majorIndex, 10); if (isNaN(gIdx) || isNaN(mIdx)) return; if (gIdx < 0 || gIdx >= groups.length) return; if (mIdx < 0 || mIdx >= groups[gIdx].majors.length) return; draggedMajorData = { groupIndex: gIdx, majorIndex: mIdx }; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', `${gIdx}|${mIdx}`); requestAnimationFrame(() => { item.classList.add('dragging'); }); }
+            function handleMajorDragEnd(e) { const item = e.target.closest('.major-item'); if (item) item.classList.remove('dragging'); document.querySelectorAll('.major-item.drag-over').forEach(el => el.classList.remove('drag-over')); draggedMajorData = null; }
+            function handleMajorDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; const item = e.target.closest('.major-item'); if (!item) return; const gIdx = parseInt(item.dataset.groupIndex, 10); const mIdx = parseInt(item.dataset.majorIndex, 10); if (isNaN(gIdx) || isNaN(mIdx)) return; if (!draggedMajorData) return; if (gIdx !== draggedMajorData.groupIndex) return; if (mIdx === draggedMajorData.majorIndex) return; document.querySelectorAll('.major-item.drag-over').forEach(el => { const gi = parseInt(el.dataset.groupIndex, 10); const mi = parseInt(el.dataset.majorIndex, 10); if (gi !== gIdx || mi !== mIdx) el.classList.remove('drag-over'); }); item.classList.add('drag-over'); }
+            function handleMajorDragEnter(e) { e.preventDefault(); }
+            function handleMajorDragLeave(e) { const item = e.target.closest('.major-item'); if (item) item.classList.remove('drag-over'); }
+            function handleMajorDrop(e) { e.preventDefault(); const item = e.target.closest('.major-item'); if (!item) return; const targetGIdx = parseInt(item.dataset.groupIndex, 10); const targetMIdx = parseInt(item.dataset.majorIndex, 10); if (isNaN(targetGIdx) || isNaN(targetMIdx)) return; if (!draggedMajorData) return; if (targetGIdx !== draggedMajorData.groupIndex) return; if (targetMIdx === draggedMajorData.majorIndex) { item.classList.remove('drag-over'); return; } const gIdx = draggedMajorData.groupIndex; const fromIdx = draggedMajorData.majorIndex; const toIdx = targetMIdx; if (gIdx < 0 || gIdx >= groups.length) return; const majors = groups[gIdx].majors; if (fromIdx < 0 || fromIdx >= majors.length || toIdx < 0 || toIdx >= majors.length) return; const [removed] = majors.splice(fromIdx, 1); majors.splice(toIdx, 0, removed); draggedMajorData = null; document.querySelectorAll('.major-item.drag-over').forEach(el => el.classList.remove('drag-over')); render(); }
+
+            // ---- 添加功能 ----
+            function openAddModal() {
+                addSchoolCode.value = '';
+                addSchoolName.value = '';
+                addGroupId.value = '';
+                addMajorName.value = '';
+                addScoreLow.value = '';
+                addScoreHigh.value = '';
+                addNote.value = '';
+                toggleAddFields();
+                addModal.classList.add('active');
+            }
+            function closeAddModal() { addModal.classList.remove('active'); }
+            function toggleAddFields() {
+                const type = addType.value;
+                if (type === 'group') majorFields.style.display = 'none';
+                else majorFields.style.display = 'block';
+            }
+            addType.addEventListener('change', toggleAddFields);
+
+            function confirmAdd() {
+                const type = addType.value;
+                const schoolCode = addSchoolCode.value.trim();
+                const schoolName = addSchoolName.value.trim();
+                const groupId = addGroupId.value.trim();
+                if (!schoolCode || !schoolName || !groupId) {
+                    alert('请完整填写学校代码、学校名称和专业组');
+                    return;
+                }
+                let groupIdx = groups.findIndex(g => g.schoolCode === schoolCode && g.schoolName === schoolName && g.groupId === groupId);
+
+                if (type === 'group') {
+                    if (groupIdx !== -1) { alert('该专业组已存在，无需重复添加'); return; }
+                    const newGroup = {
+                        id: `${schoolCode}|${schoolName}|${groupId}`,
+                        schoolCode, schoolName, groupId,
+                        majors: [],
+                        expanded: true,
+                        minScore: null,
+                        maxScore: null,
+                        userNote: '',
+                    };
+                    groups.push(newGroup);
+                    render();
+                    closeAddModal();
+                    return;
+                }
+
+                const majorName = addMajorName.value.trim();
+                if (!majorName) { alert('请填写专业名称'); return; }
+                const lowRaw = addScoreLow.value.trim();
+                const highRaw = addScoreHigh.value.trim();
+                const note = addNote.value.trim();
+
+                if (groupIdx === -1) {
+                    const newGroup = {
+                        id: `${schoolCode}|${schoolName}|${groupId}`,
+                        schoolCode, schoolName, groupId,
+                        majors: [],
+                        expanded: true,
+                        minScore: null,
+                        maxScore: null,
+                        userNote: '',
+                    };
+                    groups.push(newGroup);
+                    groupIdx = groups.length - 1;
+                }
+                const group = groups[groupIdx];
+                const scoreLow = lowRaw ? parseFloat(lowRaw) : null;
+                const scoreHigh = highRaw ? parseFloat(highRaw) : null;
+                group.majors.push({
+                    id: nextMajorId++,
+                    name: majorName,
+                    scoreLow, scoreHigh,
+                    scoreLowRaw: lowRaw,
+                    scoreHighRaw: highRaw,
+                    note: note,
+                    userNote: '',
+                });
+                updateGroupMinMax(group);
+                render();
+                closeAddModal();
+            }
+
+            addBtn.addEventListener('click', openAddModal);
+            addCancelBtn.addEventListener('click', closeAddModal);
+            addConfirmBtn.addEventListener('click', confirmAdd);
+            addModal.addEventListener('click', function(e) { if (e.target === this) closeAddModal(); });
+
+            // ---- 分数编辑模态框事件 ----
+            scoreCancelBtn.addEventListener('click', closeScoreModal);
+            scoreConfirmBtn.addEventListener('click', confirmScoreEdit);
+            scoreModal.addEventListener('click', function(e) { if (e.target === this) closeScoreModal(); });
+
+            // ---- 文件上传 ----
+            fileInput.addEventListener('change', function(e) {
+                const file = this.files[0];
+                if (!file) return;
+                currentFileName = file.name;
+                fileStatus.textContent = '读取中...';
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    try {
+                        const data = new Uint8Array(evt.target.result);
+                        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const json = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+                        if (!json || json.length === 0) {
+                            alert('文件为空或格式不正确');
+                            fileStatus.textContent = '解析失败';
+                            return;
+                        }
+                        const parsed = parseData(json);
+                        if (parsed.length === 0) {
+                            alert('未能解析出有效数据，请检查文件格式是否符合模板');
+                            fileStatus.textContent = '解析失败';
+                            return;
+                        }
+                        groups = parsed;
+                        fileStatus.innerHTML = `已加载: <span class="name">${file.name}</span> (${groups.length} 个专业组)`;
+                        render();
+                    } catch (err) {
+                        alert('解析文件失败: ' + err.message);
+                        fileStatus.textContent = '解析失败';
+                        console.error(err);
+                    }
+                };
+                reader.onerror = function() {
+                    alert('读取文件失败');
+                    fileStatus.textContent = '读取失败';
+                };
+                reader.readAsArrayBuffer(file);
+            });
+
+            document.getElementById('expandAllBtn').addEventListener('click', expandAll);
+            document.getElementById('collapseAllBtn').addEventListener('click', collapseAll);
+            exportBtn.addEventListener('click', exportData);
+
+            render();
+
+            document.addEventListener('dragover', function(e) { e.preventDefault(); });
+            document.addEventListener('drop', function(e) {
+                e.preventDefault();
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (file.name.match(/\.(xlsx|xls|csv)$/i)) {
+                        fileInput.files = files;
+                        fileInput.dispatchEvent(new Event('change'));
+                    } else {
+                        alert('请拖入 Excel 或 CSV 文件');
+                    }
+                }
+            });
+            console.log('高考志愿专业组管理工具 (修复导入)');
+        })();
+    </script>
+</body>
+</html>
