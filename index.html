@@ -7,12 +7,12 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
     </script>
     <style>
-        /* 样式与之前相同，保持不变 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background: #f5f7fa;
@@ -20,10 +20,12 @@
             padding: 24px 32px;
             min-height: 100vh;
         }
+
         .app-container {
             max-width: 1200px;
             margin: 0 auto;
         }
+
         .toolbar {
             display: flex;
             flex-wrap: wrap;
@@ -32,17 +34,20 @@
             background: #fff;
             padding: 16px 24px;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
             margin-bottom: 20px;
         }
+
         .toolbar .file-area {
             display: flex;
             align-items: center;
             gap: 10px;
         }
+
         .toolbar .file-area input[type="file"] {
             display: none;
         }
+
         .toolbar .file-label {
             display: inline-flex;
             align-items: center;
@@ -60,6 +65,7 @@
         .toolbar .file-label:hover {
             background: #1d4ed8;
         }
+
         .toolbar .file-status {
             font-size: 14px;
             color: #64748b;
@@ -68,15 +74,18 @@
             color: #0f172a;
             font-weight: 500;
         }
+
         .toolbar .spacer {
             flex: 1;
             min-width: 12px;
         }
+
         .toolbar .btn-group {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
         }
+
         .toolbar .btn {
             padding: 6px 16px;
             border-radius: 6px;
@@ -117,6 +126,7 @@
             background: #16a34a;
             border-color: #16a34a;
         }
+
         .toolbar .stats {
             font-size: 14px;
             color: #64748b;
@@ -126,12 +136,13 @@
             font-weight: 600;
             color: #0f172a;
         }
+
         .empty-state {
             background: #fff;
             border-radius: 8px;
             padding: 60px 20px;
             text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
             color: #94a3b8;
         }
         .empty-state .icon {
@@ -141,15 +152,17 @@
         .empty-state p {
             font-size: 16px;
         }
+
         .group-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
         }
+
         .group-card {
             background: #fff;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
             border: 1px solid #e9edf2;
             transition: border-color 0.15s;
             cursor: default;
@@ -188,6 +201,7 @@
         .group-card .group-header .drag-handle:active {
             cursor: grabbing;
         }
+
         .group-card .group-header .toggle-btn {
             font-size: 14px;
             width: 24px;
@@ -207,6 +221,15 @@
         .group-card .group-header .toggle-btn:hover {
             background: #e9edf2;
         }
+
+        .group-card .group-header .group-index {
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+            margin-right: 2px;
+            min-width: 24px;
+        }
+
         .group-card .group-header .group-title {
             font-size: 15px;
             font-weight: 600;
@@ -217,6 +240,7 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+
         .group-card .group-header .group-min-max-score {
             font-size: 14px;
             font-weight: 500;
@@ -238,6 +262,7 @@
         .group-card .group-header .group-min-max-score .sep {
             color: #94a3b8;
         }
+
         .group-card .group-header .action-btn {
             background: transparent;
             border: none;
@@ -258,6 +283,7 @@
             color: #ef4444;
             background: #fee2e2;
         }
+
         .group-card .group-user-note {
             padding: 0 16px 8px 52px;
             font-size: 13px;
@@ -273,6 +299,7 @@
             color: #475569;
             margin-right: 4px;
         }
+
         .major-list {
             border-top: 1px solid #e9edf2;
             padding: 4px 0;
@@ -280,6 +307,7 @@
         .major-list.collapsed {
             display: none;
         }
+
         .major-item {
             display: flex;
             align-items: center;
@@ -301,6 +329,7 @@
             margin: 1px 5px;
             border-radius: 4px;
         }
+
         .major-item .major-drag-handle {
             font-size: 16px;
             color: #cbd5e1;
@@ -313,17 +342,33 @@
         .major-item .major-drag-handle:active {
             cursor: grabbing;
         }
+
         .major-item .major-info {
             flex: 1;
             display: flex;
             flex-direction: column;
             min-width: 0;
         }
+
+        .major-item .major-name-wrapper {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .major-item .major-index {
+            font-size: 13px;
+            color: #94a3b8;
+            font-weight: 500;
+            min-width: 24px;
+        }
+
         .major-item .major-name {
             font-size: 14px;
             color: #0f172a;
             word-break: break-word;
         }
+
         .major-item .major-scores {
             display: flex;
             gap: 12px;
@@ -348,6 +393,7 @@
             color: #94a3b8;
             font-weight: 400;
         }
+
         .major-item .major-note {
             font-size: 13px;
             color: #94a3b8;
@@ -365,6 +411,7 @@
             color: #475569;
             margin-right: 4px;
         }
+
         .major-item .action-btn {
             background: transparent;
             border: none;
@@ -385,30 +432,78 @@
             color: #ef4444;
             background: #fee2e2;
         }
+
         @media (max-width: 700px) {
-            body { padding: 12px 16px; }
-            .toolbar { padding: 12px 16px; gap: 10px; }
-            .toolbar .file-area { flex-wrap: wrap; }
-            .group-card .group-header { flex-wrap: wrap; gap: 6px; }
-            .group-card .group-header .group-title { white-space: normal; font-size: 14px; }
-            .group-card .group-user-note { padding-left: 36px; }
-            .major-item { padding: 6px 12px 6px 36px; flex-wrap: wrap; }
-            .major-item .major-info { flex: 1 1 100%; order: 2; }
-            .major-item .major-scores { order: 1; flex: 0 0 auto; }
-            .major-item .major-drag-handle { order: 0; }
-            .action-btn { font-size: 14px; }
-            .group-card .group-header .group-min-max-score { font-size: 12px; padding: 2px 8px; flex-wrap: wrap; }
+            body {
+                padding: 12px 16px;
+            }
+            .toolbar {
+                padding: 12px 16px;
+                gap: 10px;
+            }
+            .toolbar .file-area {
+                flex-wrap: wrap;
+            }
+            .group-card .group-header {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .group-card .group-header .group-title {
+                white-space: normal;
+                font-size: 14px;
+            }
+            .group-card .group-user-note {
+                padding-left: 36px;
+            }
+            .major-item {
+                padding: 6px 12px 6px 36px;
+                flex-wrap: wrap;
+            }
+            .major-item .major-info {
+                flex: 1 1 100%;
+                order: 2;
+            }
+            .major-item .major-scores {
+                order: 1;
+                flex: 0 0 auto;
+            }
+            .major-item .major-drag-handle {
+                order: 0;
+            }
+            .action-btn {
+                font-size: 14px;
+            }
+            .group-card .group-header .group-min-max-score {
+                font-size: 12px;
+                padding: 2px 8px;
+                flex-wrap: wrap;
+            }
+            .group-card .group-header .group-index {
+                font-size: 12px;
+                min-width: 18px;
+            }
+            .major-item .major-index {
+                font-size: 12px;
+                min-width: 18px;
+            }
         }
+
+        /* 模态框通用 */
         .modal-overlay {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.4);
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 1000;
         }
-        .modal-overlay.active { display: flex; }
+        .modal-overlay.active {
+            display: flex;
+        }
         .modal {
             background: #fff;
             border-radius: 12px;
@@ -417,7 +512,7 @@
             width: 90%;
             max-height: 90vh;
             overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
         }
         .modal .modal-title {
             font-size: 20px;
@@ -447,7 +542,7 @@
         .modal .form-group select:focus {
             outline: none;
             border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
         .modal .form-row {
             display: flex;
@@ -480,6 +575,12 @@
         .modal .modal-actions .btn.confirm:hover {
             background: #1d4ed8;
         }
+        .modal .divider {
+            border: none;
+            border-top: 1px solid #e9edf2;
+            margin: 16px 0;
+        }
+
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -498,6 +599,7 @@
     </style>
 </head>
 <body>
+
     <div class="app-container">
         <div class="toolbar">
             <div class="file-area">
@@ -514,6 +616,7 @@
                 <button class="btn primary" id="exportBtn" disabled>⬇️ 导出</button>
             </div>
         </div>
+
         <div id="groupListContainer" class="group-list">
             <div class="empty-state">
                 <div class="icon">📋</div>
@@ -734,7 +837,6 @@
                         });
                     }
                     const group = groupMap.get(key);
-                    // 如果之前没有设置 userNote 且当前有值，则更新（所有行应一致）
                     if (!group.userNote && groupUserNote) group.userNote = groupUserNote;
 
                     const scoreLow = scoreLowRaw ? parseFloat(scoreLowRaw) : null;
@@ -882,7 +984,7 @@
                 render();
             }
 
-            // ---- 渲染 ----
+            // ---- 渲染（带序号） ----
             function render() {
                 if (groups.length === 0) {
                     container.innerHTML = `
@@ -900,6 +1002,7 @@
                 let html = '';
                 for (let gIdx = 0; gIdx < groups.length; gIdx++) {
                     const group = groups[gIdx];
+                    const groupNum = gIdx + 1;
                     const minScoreStr = group.minScore !== null ? group.minScore : '—';
                     const maxScoreStr = group.maxScore !== null ? group.maxScore : '—';
                     const hasScores = group.minScore !== null || group.maxScore !== null;
@@ -915,6 +1018,7 @@
                             <div class="group-header" data-group-index="${gIdx}" style="cursor:grab;">
                                 <span class="drag-handle" data-group-index="${gIdx}">⠿</span>
                                 <button class="toggle-btn" data-group-index="${gIdx}" data-action="toggle">${group.expanded ? '▾' : '▸'}</button>
+                                <span class="group-index">#${groupNum}</span>
                                 <span class="group-title">${group.schoolCode}-${group.schoolName}-${group.groupId}</span>
                                 <span class="group-min-max-score">
                                     <span class="min">最低 ${minScoreStr}</span>
@@ -928,6 +1032,7 @@
                             ${groupNoteHtml}
                             <div class="major-list ${group.expanded ? '' : 'collapsed'}" data-group-index="${gIdx}">
                                 ${group.majors.map((major, mIdx) => {
+                                    const majorNum = mIdx + 1;
                                     const lowDisplay = major.scoreLow !== null ? major.scoreLow : '—';
                                     const highDisplay = major.scoreHigh !== null ? major.scoreHigh : '—';
                                     const lowClass = major.scoreLow === null ? 'empty' : '';
@@ -938,7 +1043,10 @@
                                         <div class="major-item" data-group-index="${gIdx}" data-major-index="${mIdx}" draggable="true">
                                             <span class="major-drag-handle" data-group-index="${gIdx}" data-major-index="${mIdx}">⠿</span>
                                             <div class="major-info">
-                                                <span class="major-name">${escapeHtml(major.name)}</span>
+                                                <div class="major-name-wrapper">
+                                                    <span class="major-index">${majorNum}.</span>
+                                                    <span class="major-name">${escapeHtml(major.name)}</span>
+                                                </div>
                                                 <div class="major-scores">
                                                     <span class="score-item"><span class="label">最低</span> <span class="value ${lowClass}">${lowDisplay}</span></span>
                                                     <span class="score-item"><span class="label">最高</span> <span class="value ${highClass}">${highDisplay}</span></span>
@@ -993,8 +1101,10 @@
                 groups[gIdx].expanded = !groups[gIdx].expanded;
                 render();
             }
-            function expandAll() { for (const g of groups) g.expanded = true; render(); }
-            function collapseAll() { for (const g of groups) g.expanded = false; render(); }
+            function expandAll() { for (const g of groups) g.expanded = true;
+                render(); }
+            function collapseAll() { for (const g of groups) g.expanded = false;
+                render(); }
 
             function bindActionEvents() {
                 document.querySelectorAll('[data-action="delete-group"]').forEach(btn => {
@@ -1018,14 +1128,23 @@
                     btn.addEventListener('click', handleEditScores);
                 });
             }
-            function handleDeleteGroup(e) { e.stopPropagation(); const btn = e.currentTarget; const gIdx = parseInt(btn.dataset.groupIndex, 10); if (!isNaN(gIdx)) deleteGroup(gIdx); }
-            function handleDeleteMajor(e) { e.stopPropagation(); const btn = e.currentTarget; const gIdx = parseInt(btn.dataset.groupIndex, 10); const mIdx = parseInt(btn.dataset.majorIndex, 10); if (!isNaN(gIdx) && !isNaN(mIdx)) deleteMajor(gIdx, mIdx); }
-            function handleEditGroupNote(e) { e.stopPropagation(); const btn = e.currentTarget; const gIdx = parseInt(btn.dataset.groupIndex, 10); if (!isNaN(gIdx)) editGroupNote(gIdx); }
-            function handleEditMajorNote(e) { e.stopPropagation(); const btn = e.currentTarget; const gIdx = parseInt(btn.dataset.groupIndex, 10); const mIdx = parseInt(btn.dataset.majorIndex, 10); if (!isNaN(gIdx) && !isNaN(mIdx)) editMajorNote(gIdx, mIdx); }
-            function handleEditScores(e) { e.stopPropagation(); const btn = e.currentTarget; const gIdx = parseInt(btn.dataset.groupIndex, 10); const mIdx = parseInt(btn.dataset.majorIndex, 10); if (!isNaN(gIdx) && !isNaN(mIdx)) openScoreModal(gIdx, mIdx); }
+            function handleDeleteGroup(e) { e.stopPropagation(); const btn = e.currentTarget; const gIdx = parseInt(btn.dataset
+                    .groupIndex, 10); if (!isNaN(gIdx)) deleteGroup(gIdx); }
+            function handleDeleteMajor(e) { e.stopPropagation(); const btn = e.currentTarget; const gIdx = parseInt(btn.dataset
+                    .groupIndex, 10); const mIdx = parseInt(btn.dataset.majorIndex, 10); if (!isNaN(gIdx) && !isNaN(mIdx))
+                    deleteMajor(gIdx, mIdx); }
+            function handleEditGroupNote(e) { e.stopPropagation(); const btn = e.currentTarget; const gIdx = parseInt(btn.dataset
+                    .groupIndex, 10); if (!isNaN(gIdx)) editGroupNote(gIdx); }
+            function handleEditMajorNote(e) { e.stopPropagation(); const btn = e.currentTarget; const gIdx = parseInt(btn.dataset
+                    .groupIndex, 10); const mIdx = parseInt(btn.dataset.majorIndex, 10); if (!isNaN(gIdx) && !isNaN(mIdx))
+                    editMajorNote(gIdx, mIdx); }
+            function handleEditScores(e) { e.stopPropagation(); const btn = e.currentTarget; const gIdx = parseInt(btn.dataset
+                    .groupIndex, 10); const mIdx = parseInt(btn.dataset.majorIndex, 10); if (!isNaN(gIdx) && !isNaN(mIdx))
+                    openScoreModal(gIdx, mIdx); }
 
             // ---- 拖拽 ----
             let draggedGroupIndex = null;
+
             function bindDragEvents() {
                 container.removeEventListener('dragstart', handleGroupDragStart);
                 container.removeEventListener('dragend', handleGroupDragEnd);
@@ -1040,14 +1159,37 @@
                 container.addEventListener('dragleave', handleGroupDragLeave);
                 container.addEventListener('drop', handleGroupDrop);
             }
-            function handleGroupDragStart(e) { const card = e.target.closest('.group-card'); if (!card) return; const gIdx = parseInt(card.dataset.groupIndex, 10); if (isNaN(gIdx)) return; draggedGroupIndex = gIdx; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(gIdx)); requestAnimationFrame(() => { card.classList.add('dragging'); }); }
-            function handleGroupDragEnd(e) { const card = e.target.closest('.group-card'); if (card) card.classList.remove('dragging'); document.querySelectorAll('.group-card.drag-over').forEach(el => el.classList.remove('drag-over')); draggedGroupIndex = null; }
-            function handleGroupDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; const card = e.target.closest('.group-card'); if (!card) return; const gIdx = parseInt(card.dataset.groupIndex, 10); if (isNaN(gIdx) || gIdx === draggedGroupIndex) return; document.querySelectorAll('.group-card.drag-over').forEach(el => { if (parseInt(el.dataset.groupIndex, 10) !== gIdx) el.classList.remove('drag-over'); }); card.classList.add('drag-over'); }
+
+            function handleGroupDragStart(e) { const card = e.target.closest('.group-card'); if (!card) return; const gIdx =
+                    parseInt(card.dataset.groupIndex, 10); if (isNaN(gIdx)) return; draggedGroupIndex = gIdx; e.dataTransfer
+                    .effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(gIdx)); requestAnimationFrame(() =>
+                    { card.classList.add('dragging'); }); }
+
+            function handleGroupDragEnd(e) { const card = e.target.closest('.group-card'); if (card) card.classList.remove(
+                    'dragging'); document.querySelectorAll('.group-card.drag-over').forEach(el => el.classList.remove(
+                    'drag-over')); draggedGroupIndex = null; }
+
+            function handleGroupDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; const card = e.target
+                    .closest('.group-card'); if (!card) return; const gIdx = parseInt(card.dataset.groupIndex, 10); if (
+                    isNaN(gIdx) || gIdx === draggedGroupIndex) return; document.querySelectorAll('.group-card.drag-over')
+                    .forEach(el => { if (parseInt(el.dataset.groupIndex, 10) !== gIdx) el.classList.remove('drag-over'); });
+                card.classList.add('drag-over'); }
+
             function handleGroupDragEnter(e) { e.preventDefault(); }
-            function handleGroupDragLeave(e) { const card = e.target.closest('.group-card'); if (card) card.classList.remove('drag-over'); }
-            function handleGroupDrop(e) { e.preventDefault(); const card = e.target.closest('.group-card'); if (!card) return; const targetIdx = parseInt(card.dataset.groupIndex, 10); if (isNaN(targetIdx) || draggedGroupIndex === null || targetIdx === draggedGroupIndex) { card.classList.remove('drag-over'); return; } if (draggedGroupIndex < 0 || draggedGroupIndex >= groups.length || targetIdx < 0 || targetIdx >= groups.length) { card.classList.remove('drag-over'); return; } const [removed] = groups.splice(draggedGroupIndex, 1); groups.splice(targetIdx, 0, removed); draggedGroupIndex = null; document.querySelectorAll('.group-card.drag-over').forEach(el => el.classList.remove('drag-over')); render(); }
+
+            function handleGroupDragLeave(e) { const card = e.target.closest('.group-card'); if (card) card.classList.remove(
+                    'drag-over'); }
+
+            function handleGroupDrop(e) { e.preventDefault(); const card = e.target.closest('.group-card'); if (!card) return;
+                const targetIdx = parseInt(card.dataset.groupIndex, 10); if (isNaN(targetIdx) || draggedGroupIndex === null ||
+                    targetIdx === draggedGroupIndex) { card.classList.remove('drag-over'); return; } if (draggedGroupIndex <
+                    0 || draggedGroupIndex >= groups.length || targetIdx < 0 || targetIdx >= groups.length) { card.classList
+                        .remove('drag-over'); return; } const [removed] = groups.splice(draggedGroupIndex, 1); groups.splice(
+                    targetIdx, 0, removed); draggedGroupIndex = null; document.querySelectorAll('.group-card.drag-over')
+                    .forEach(el => el.classList.remove('drag-over')); render(); }
 
             let draggedMajorData = null;
+
             function bindMajorDragEvents() {
                 container.removeEventListener('dragstart', handleMajorDragStart);
                 container.removeEventListener('dragend', handleMajorDragEnd);
@@ -1062,12 +1204,41 @@
                 container.addEventListener('dragleave', handleMajorDragLeave);
                 container.addEventListener('drop', handleMajorDrop);
             }
-            function handleMajorDragStart(e) { const item = e.target.closest('.major-item'); if (!item) return; const gIdx = parseInt(item.dataset.groupIndex, 10); const mIdx = parseInt(item.dataset.majorIndex, 10); if (isNaN(gIdx) || isNaN(mIdx)) return; if (gIdx < 0 || gIdx >= groups.length) return; if (mIdx < 0 || mIdx >= groups[gIdx].majors.length) return; draggedMajorData = { groupIndex: gIdx, majorIndex: mIdx }; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', `${gIdx}|${mIdx}`); requestAnimationFrame(() => { item.classList.add('dragging'); }); }
-            function handleMajorDragEnd(e) { const item = e.target.closest('.major-item'); if (item) item.classList.remove('dragging'); document.querySelectorAll('.major-item.drag-over').forEach(el => el.classList.remove('drag-over')); draggedMajorData = null; }
-            function handleMajorDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; const item = e.target.closest('.major-item'); if (!item) return; const gIdx = parseInt(item.dataset.groupIndex, 10); const mIdx = parseInt(item.dataset.majorIndex, 10); if (isNaN(gIdx) || isNaN(mIdx)) return; if (!draggedMajorData) return; if (gIdx !== draggedMajorData.groupIndex) return; if (mIdx === draggedMajorData.majorIndex) return; document.querySelectorAll('.major-item.drag-over').forEach(el => { const gi = parseInt(el.dataset.groupIndex, 10); const mi = parseInt(el.dataset.majorIndex, 10); if (gi !== gIdx || mi !== mIdx) el.classList.remove('drag-over'); }); item.classList.add('drag-over'); }
+
+            function handleMajorDragStart(e) { const item = e.target.closest('.major-item'); if (!item) return; const gIdx =
+                    parseInt(item.dataset.groupIndex, 10); const mIdx = parseInt(item.dataset.majorIndex, 10); if (isNaN(gIdx) ||
+                    isNaN(mIdx)) return; if (gIdx < 0 || gIdx >= groups.length) return; if (mIdx < 0 || mIdx >= groups[gIdx]
+                    .majors.length) return; draggedMajorData = { groupIndex: gIdx, majorIndex: mIdx }; e.dataTransfer
+                    .effectAllowed = 'move'; e.dataTransfer.setData('text/plain', `${gIdx}|${mIdx}`); requestAnimationFrame(
+                    () => { item.classList.add('dragging'); }); }
+
+            function handleMajorDragEnd(e) { const item = e.target.closest('.major-item'); if (item) item.classList.remove(
+                    'dragging'); document.querySelectorAll('.major-item.drag-over').forEach(el => el.classList.remove(
+                    'drag-over')); draggedMajorData = null; }
+
+            function handleMajorDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; const item = e.target
+                    .closest('.major-item'); if (!item) return; const gIdx = parseInt(item.dataset.groupIndex, 10); const mIdx =
+                    parseInt(item.dataset.majorIndex, 10); if (isNaN(gIdx) || isNaN(mIdx)) return; if (!draggedMajorData)
+                    return; if (gIdx !== draggedMajorData.groupIndex) return; if (mIdx === draggedMajorData.majorIndex)
+                    return; document.querySelectorAll('.major-item.drag-over').forEach(el => { const gi = parseInt(el.dataset
+                        .groupIndex, 10); const mi = parseInt(el.dataset.majorIndex, 10); if (gi !== gIdx || mi !== mIdx) el
+                        .classList.remove('drag-over'); }); item.classList.add('drag-over'); }
+
             function handleMajorDragEnter(e) { e.preventDefault(); }
-            function handleMajorDragLeave(e) { const item = e.target.closest('.major-item'); if (item) item.classList.remove('drag-over'); }
-            function handleMajorDrop(e) { e.preventDefault(); const item = e.target.closest('.major-item'); if (!item) return; const targetGIdx = parseInt(item.dataset.groupIndex, 10); const targetMIdx = parseInt(item.dataset.majorIndex, 10); if (isNaN(targetGIdx) || isNaN(targetMIdx)) return; if (!draggedMajorData) return; if (targetGIdx !== draggedMajorData.groupIndex) return; if (targetMIdx === draggedMajorData.majorIndex) { item.classList.remove('drag-over'); return; } const gIdx = draggedMajorData.groupIndex; const fromIdx = draggedMajorData.majorIndex; const toIdx = targetMIdx; if (gIdx < 0 || gIdx >= groups.length) return; const majors = groups[gIdx].majors; if (fromIdx < 0 || fromIdx >= majors.length || toIdx < 0 || toIdx >= majors.length) return; const [removed] = majors.splice(fromIdx, 1); majors.splice(toIdx, 0, removed); draggedMajorData = null; document.querySelectorAll('.major-item.drag-over').forEach(el => el.classList.remove('drag-over')); render(); }
+
+            function handleMajorDragLeave(e) { const item = e.target.closest('.major-item'); if (item) item.classList.remove(
+                    'drag-over'); }
+
+            function handleMajorDrop(e) { e.preventDefault(); const item = e.target.closest('.major-item'); if (!item) return;
+                const targetGIdx = parseInt(item.dataset.groupIndex, 10); const targetMIdx = parseInt(item.dataset.majorIndex,
+                    10); if (isNaN(targetGIdx) || isNaN(targetMIdx)) return; if (!draggedMajorData) return; if (targetGIdx !==
+                    draggedMajorData.groupIndex) return; if (targetMIdx === draggedMajorData.majorIndex) { item.classList
+                        .remove('drag-over'); return; } const gIdx = draggedMajorData.groupIndex; const fromIdx =
+                    draggedMajorData.majorIndex; const toIdx = targetMIdx; if (gIdx < 0 || gIdx >= groups.length) return; const
+                    majors = groups[gIdx].majors; if (fromIdx < 0 || fromIdx >= majors.length || toIdx < 0 || toIdx >= majors
+                    .length) return; const [removed] = majors.splice(fromIdx, 1); majors.splice(toIdx, 0, removed);
+                draggedMajorData = null; document.querySelectorAll('.major-item.drag-over').forEach(el => el.classList.remove(
+                    'drag-over')); render(); }
 
             // ---- 添加功能 ----
             function openAddModal() {
@@ -1081,7 +1252,9 @@
                 toggleAddFields();
                 addModal.classList.add('active');
             }
+
             function closeAddModal() { addModal.classList.remove('active'); }
+
             function toggleAddFields() {
                 const type = addType.value;
                 if (type === 'group') majorFields.style.display = 'none';
@@ -1098,13 +1271,16 @@
                     alert('请完整填写学校代码、学校名称和专业组');
                     return;
                 }
-                let groupIdx = groups.findIndex(g => g.schoolCode === schoolCode && g.schoolName === schoolName && g.groupId === groupId);
+                let groupIdx = groups.findIndex(g => g.schoolCode === schoolCode && g.schoolName === schoolName && g.groupId ===
+                    groupId);
 
                 if (type === 'group') {
                     if (groupIdx !== -1) { alert('该专业组已存在，无需重复添加'); return; }
                     const newGroup = {
                         id: `${schoolCode}|${schoolName}|${groupId}`,
-                        schoolCode, schoolName, groupId,
+                        schoolCode,
+                        schoolName,
+                        groupId,
                         majors: [],
                         expanded: true,
                         minScore: null,
@@ -1126,7 +1302,9 @@
                 if (groupIdx === -1) {
                     const newGroup = {
                         id: `${schoolCode}|${schoolName}|${groupId}`,
-                        schoolCode, schoolName, groupId,
+                        schoolCode,
+                        schoolName,
+                        groupId,
                         majors: [],
                         expanded: true,
                         minScore: null,
@@ -1142,7 +1320,8 @@
                 group.majors.push({
                     id: nextMajorId++,
                     name: majorName,
-                    scoreLow, scoreHigh,
+                    scoreLow,
+                    scoreHigh,
                     scoreLowRaw: lowRaw,
                     scoreHighRaw: highRaw,
                     note: note,
@@ -1223,8 +1402,9 @@
                     }
                 }
             });
-            console.log('高考志愿专业组管理工具 (修复导入)');
+            console.log('高考志愿专业组管理工具 (带序号)');
         })();
     </script>
+
 </body>
 </html>
